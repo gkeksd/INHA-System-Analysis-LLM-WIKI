@@ -16,7 +16,7 @@ def pre_input_hook(raw_filepath, output_jsonpath):
         
     # 간단한 정규식 기반 메타데이터 및 타이틀 추출 파싱 엔진
     title_match = re.search(r'^#\s+(.*)', content, re.MULTILINE)
-    title = title_match.group(1).trim() if title_match else "Untitled Page"
+    title = title_match.group(1).strip() if title_match else "Untitled Page"
     
     # 핵심 단어 추출을 통한 연관 관계 후보군 자동 추천 알고리즘 (Skill)
     keywords = ["Dijkstra", "Kruskal", "Dynamic Programming", "Greedy", "Graph", "Complexity"]
