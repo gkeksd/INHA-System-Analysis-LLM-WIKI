@@ -3,73 +3,316 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dynamic Knowledge Wiki Ecosystem</title>
+<title>Unified Knowledge Wiki & Topology Ecosystem</title>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  
   :root {
-    --bg: #0f1117; --sidebar-bg: #161b22; --content-bg: #0d1117;
-    --border: #21262d; --accent: #58a6ff; --text: #c9d1d9; --heading: #f0f6fc;
+    --bg: #0d1117;
+    --sidebar-bg: #161b22;
+    --content-bg: #0d1117;
+    --border: #21262d;
+    --accent: #58a6ff;
+    --accent-success: #2ea44f;
+    --text: #c9d1d9;
+    --heading: #f0f6fc;
+    --code-bg: #1f242c;
   }
-  body { font-family: sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
-  #sidebar { width: 260px; background: var(--sidebar-bg); border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; }
-  #main-content { flex: 1; padding: 30px; overflow-y: auto; background: var(--content-bg); }
-  #graph-panel { width: 300px; border-left: 1px solid var(--border); background: var(--sidebar-bg); padding: 15px; }
-  .menu-item { padding: 10px; margin: 5px 0; background: #21262d; cursor: pointer; border-radius: 6px; }
-  .menu-item:hover { background: var(--accent); color: #000; }
-  .graph-box { width: 100%; height: 250px; background: #0d1117; border: 1px solid var(--border); border-radius: 6px; margin-top: 15px; position: relative; }
-  .node-dot { display: inline-block; width: 10px; height: 10px; background: #3fb950; border-radius: 50%; margin-right: 5px; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* 1. 사이드바 개선 (스크롤바 완벽 적용) */
+  #sidebar {
+    width: 280px;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+
+  .sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-header h2 {
+    font-size: 18px;
+    color: var(--heading);
+  }
+
+  #menu-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+  }
+
+  #menu-list::-webkit-scrollbar {
+    width: 6px;
+  }
+  #menu-list::-webkit-scrollbar-thumb {
+    background: #30363d;
+    border-radius: 3px;
+  }
+  #menu-list::-webkit-scrollbar-thumb:hover {
+    background: #8b949e;
+  }
+
+  .menu-item {
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    background: #21262d;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+  }
+
+  .menu-item:hover {
+    background: #30363d;
+    border-color: var(--accent);
+    color: var(--heading);
+  }
+
+  /* 3. 본문 뷰어 가독성 및 줄간격 확장 패널 */
+  #main-content {
+    flex: 1;
+    padding: 40px;
+    overflow-y: auto;
+    background: var(--content-bg);
+    line-height: 1.8;
+  }
+
+  #wiki-title {
+    font-size: 32px;
+    color: var(--heading);
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+  }
+
+  #wiki-subtitle {
+    color: #8b949e;
+    font-size: 15px;
+    margin-bottom: 30px;
+    font-style: italic;
+  }
+
+  #wiki-body h1, #wiki-body h2, #wiki-body h3 {
+    color: var(--heading);
+    margin-top: 24px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  #wiki-body h2 { border-bottom: 1px solid var(--border); padding-bottom: 6px; font-size: 20px; }
+  #wiki-body p { margin-bottom: 16px; font-size: 16px; color: #e6edf3; }
+  #wiki-body ul, #wiki-body ol { padding-left: 20px; margin-bottom: 16px; }
+  #wiki-body li { margin-bottom: 4px; }
+  
+  #wiki-body pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 20px 0;
+  }
+  #wiki-body code {
+    font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, monospace;
+    font-size: 14px;
+    background: #21262d;
+    padding: 3px 6px;
+    border-radius: 6px;
+    color: #ff7b72;
+  }
+  #wiki-body pre code {
+    background: none;
+    padding: 0;
+    color: #c9d1d9;
+  }
+
+  #wiki-body blockquote {
+    border-left: 4px solid var(--accent);
+    padding: 0 15px;
+    color: #8b949e;
+    margin: 20px 0;
+    background: #161b22;
+    border-radius: 0 6px 6px 0;
+  }
+
+  /* 2. 우측 토폴로지 패널 (높이 가득 채우기 수정) */
+  #graph-panel {
+    width: 380px;
+    border-left: 1px solid var(--border);
+    background: var(--sidebar-bg);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+
+  .graph-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  #network-viz {
+    flex: 1;
+    width: 100%;
+    height: calc(100vh - 65px); /* 헤더 영역을 제외한 나머지 높이를 픽셀로 완벽히 바인딩 */
+    background: #090d13;
+  }
 </style>
 </head>
 <body>
 
 <div id="sidebar">
-  <h2>📚 지식 위키 저장소</h2>
-  <hr style="margin: 15px 0; border-color: var(--border);">
+  <div class="sidebar-header">
+    <h2>📚 Knowledge Wiki Base</h2>
+  </div>
   <div id="menu-list">로딩 중...</div>
 </div>
 
 <div id="main-content">
-  <h1 id="wiki-title">위키 메인 대시보드</h1>
-  <p id="wiki-subtitle" style="color: #8b949e; margin-bottom: 20px;">페이지를 선택하거나 새 자료를 투입하세요.</p>
-  <div id="wiki-body">하네스 에이전트 인프라가 실시간 가동 중입니다.</div>
-</div>
-
-<div id="graph-panel">
-  <h3>📊 지식 관계 시각화 토폴로지</h3>
-  <div class="graph-box" id="viz-container">
-    <div style="padding: 10px; font-size: 12px; color: #8b949e;">에이전트가 자동 매핑한 토폴로지 관계도:</div>
-    <div id="graph-nodes" style="padding: 10px;"></div>
+  <h1 id="wiki-title">통합 지식 대시보드</h1>
+  <p id="wiki-subtitle">에이전트 인프라가 실시간 동기화 중입니다. 좌측 리스트에서 문서를 선택하세요.</p>
+  <div id="wiki-body">
+    <blockquote>우측의 시각화 도구는 실시간으로 지식 관계망 토폴로지를 분석하여 렌더링합니다.</blockquote>
   </div>
 </div>
 
+<div id="graph-panel">
+  <div class="graph-header">
+    <h3>📊 지식 연관 토폴로지 맵</h3>
+  </div>
+  <div id="network-viz"></div>
+</div>
+
 <script>
-  async function loadWiki() {
+  let network = null;
+
+  async function loadWikiSystem() {
     const res = await fetch('/api/wiki');
     const data = await res.json();
     const menuList = document.getElementById('menu-list');
     menuList.innerHTML = '';
     
-    Object.keys(data).forEach(key => {
+    Object.keys(data).sort().forEach(key => {
       const p = data[key];
       const div = document.createElement('div');
       div.className = 'menu-item';
       div.innerText = p.title;
       div.onclick = () => {
         document.getElementById('wiki-title').innerText = p.title;
-        document.getElementById('wiki-subtitle').innerText = p.subtitle;
-        document.getElementById('wiki-body').innerHTML = p.content;
+  document.getElementById('wiki-subtitle').innerText = p.subtitle || "Knowledge Document";
+  
+  // 본문 안에서 중복 출력되는 제목(#) 및 부제목(##) 라인을 필터링하여 제거
+  let cleanContent = p.content
+    .replace(/^#\s+.*\n?/m, '')          // 최상단 H1 제목 라인 삭제
+    .replace(/^##\s+부제목\s*\n?.*/m, '');  // ## 부제목 및 그 바로 아랫줄 내용 삭제
+    
+  document.getElementById('wiki-body').innerHTML = marked.parse(cleanContent.trim());
+        
+        if(network) {
+          try {
+            network.selectNodes([p.id]);
+            network.focus(p.id, { scale: 1.1, animation: { duration: 400 } });
+          } catch(e) {}
+        }
       };
       menuList.appendChild(div);
     });
 
-    // 그래프 렌더링용 단순 뷰어 데이터 매핑
+    // 데이터를 모두 불러온 후 레이아웃이 완전히 정착된 시점에 토폴로지 그래프 렌더링 실행
+    setTimeout(() => {
+      renderTopologyGraph();
+    }, 100);
+  }
+
+  async function renderTopologyGraph() {
     const graphRes = await fetch('/api/graph');
     const graphData = await graphRes.json();
-    const gContainer = document.getElementById('graph-nodes');
-    gContainer.innerHTML = graphData.nodes.map(n => `<div style="font-size:13px; margin:4px 0;"><span class="node-dot"></span>${n.label}</div>`).join('');
+    
+    const container = document.getElementById('network-viz');
+    
+    const data = {
+      nodes: graphData.nodes.map(n => ({
+        id: n.id,
+        label: n.label,
+        shape: 'dot',
+        size: 14,
+        color: {
+          background: '#1f6feb',
+          border: '#58a6ff',
+          highlight: { background: '#2ea44f', border: '#3fb950' }
+        },
+        font: { color: '#c9d1d9', size: 11, face: 'sans-serif' }
+      })),
+      edges: graphData.edges.map(e => ({
+        from: e.from,
+        to: e.to,
+        arrows: 'to',
+        color: { color: '#30363d', highlight: '#58a6ff' },
+        width: 1.2,
+        smooth: { type: 'continuous' } // 선이 꼬이지 않고 부드럽게 펴지도록 옵션 추가
+      }))
+    };
+
+    const options = {
+      physics: {
+        enabled: true,
+        solver: 'forceAtlas2Based', // 고밀도 분산 배치에 특화된 물리 엔진 채택
+        forceAtlas2Based: {
+          gravitationalConstant: -50,
+          centralGravity: 0.01,
+          springLength: 80,
+          springConstant: 0.08
+        },
+        stabilization: { iterations: 100, fit: true } // 켜지자마자 화면 중앙 정렬 강제 활성화
+      },
+      interaction: { hover: true, dragNodes: true, zoomView: true, dragView: true }
+    };
+
+    // 기존 네트워크가 존재한다면 파괴 후 리빌드 (메모리 꼬임 및 증발 원천 방지)
+    if(network !== null) {
+      network.destroy();
+      network = null;
+    }
+
+    network = new vis.Network(container, data, options);
+    
+    // 그래프 로딩 직후 화면 중앙으로 노드들을 모아주는 강제 정렬 트리거
+    network.once("stabilizationIterationsDone", function () {
+      network.fit();
+    });
+
+    network.on("click", async function (params) {
+      if (params.nodes.length > 0) {
+        const nodeId = params.nodes[0];
+        const res = await fetch('/api/wiki');
+        const wikiData = await res.json();
+        if(wikiData[nodeId]) {
+          document.getElementById('wiki-title').innerText = wikiData[nodeId].title;
+          document.getElementById('wiki-subtitle').innerText = wikiData[nodeId].subtitle || "Knowledge Document";
+          document.getElementById('wiki-body').innerHTML = marked.parse(wikiData[nodeId].content);
+        }
+      }
+    });
   }
   
-  window.onload = loadWiki;
+  window.onload = loadWikiSystem;
 </script>
 </body>
 </html>
