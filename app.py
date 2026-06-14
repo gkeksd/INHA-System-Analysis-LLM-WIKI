@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify
 import json
 import os
 
@@ -21,21 +21,34 @@ def get_all_wiki():
 
 @app.route('/api/graph')
 def get_graph_data():
-    """
-    지식 시각화 도구: 페이지 간 연관관계를 D3/Vis.js 그래프용 데이터로 변환
-    """
     data = load_wiki_data()
     nodes = []
     edges = []
+    
+    valid_ids = set(data.keys())
+
     for key, val in data.items():
-        nodes.append({"id": val["id"], "label": val["title"]})
-        for rel in val.get("related", []):
-            rel_id = rel.lower().replace(" ", "_")
-            edges.append({"from": val["id"], "to": rel_id})
-    return jsonify({"nodes": nodes, "edges": edges})
+        # 노드 등록
+        nodes.append({
+            "id": val["id"], 
+            "label": val["title"]
+        })
+        
+        # 엣지 등록
+        for rel_id in val.get("related", []):
+            clean_rel_id = rel_id.lower().strip()
+            # 실제로 DB에 존재하는 타겟 노드 아이디일 경우에만 매핑 선 연결
+            if clean_rel_id in valid_ids and clean_rel_id != val["id"]:
+                edges.append({
+                    "from": val["id"], 
+                    "to": clean_rel_id
+                })
+
+    # 중복 관계선 정리
+    unique_edges = [dict(t) for t in {tuple(d.items()) for d in edges}]
+    return jsonify({"nodes": nodes, "edges": unique_edges})
 
 if __name__ == '__main__':
-    # 저장소 초기화 설정
     os.makedirs('wiki', exist_ok=True)
     os.makedirs('raw', exist_ok=True)
     app.run(host='0.0.0.0', port=5000, debug=True)
